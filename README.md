@@ -1,0 +1,1 @@
+# mdBook with dictionary replacement

@@ -1,0 +1,9 @@
+[package]
+name = "mdbook_with_dic"
+version = "0.1.0"
+authors = ["Rinthel Kwon in Office <r@insertcoin.me>"]
+
+[dependencies]
+mdbook = "*"
+clap = "*"
+toml = "0.4"
