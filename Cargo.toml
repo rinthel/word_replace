@@ -7,3 +7,4 @@ authors = ["Rinthel Kwon in Office <r@insertcoin.me>"]
 mdbook = "*"
 clap = "*"
 toml = "0.4"
+regex = "0.2"
