@@ -20,8 +20,11 @@ fn main() {
 
     // println!("current path: {}", env::current_dir().unwrap().display());
     // println!("{:?}", matches);
+    let toml_value = read_dictionary_toml_file(Path::new("dic.toml"));
+    let dictionary_map = get_dictionary(&toml_value, "ko").expect("cannot read dictionary");
+    let suffix_pairs = get_suffix_pairs(&toml_value, "ko").expect("cannot read suffix");
 
-    let dictionary_map = get_dictionary("ko").expect("cannot read dictionary");
+    println!("suffix pairs: {:?}", suffix_pairs);
 
     // open dir and scan all .md files
     {        

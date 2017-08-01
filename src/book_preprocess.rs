@@ -8,14 +8,16 @@ use std::path::Path;
 use self::toml::Value;
 use self::regex::Regex;
 
-pub fn get_dictionary(language: &str) -> Result<HashMap<String, String>, String> {
-    let mut dic_file = File::open("dic.toml").expect("could not open dic.toml");
+pub fn read_dictionary_toml_file(filename: &Path) -> Value {
+    let mut dic_file = File::open(filename).expect("could not open dic.toml");
     let mut dic_string = String::new();
     dic_file.read_to_string(&mut dic_string).expect("could not read contents from dic.toml");
-    let dic_value = dic_string.parse::<Value>().expect("could not parse dic.toml");
+    dic_string.parse::<Value>().expect("could not parse dic.toml")
+}
 
+pub fn get_dictionary(toml_value: &Value, language: &str) -> Result<HashMap<String, String>, &'static str> {
     let mut dictionary_map: HashMap<String, String> = HashMap::new();
-    if let Value::Table(dic_table) = dic_value {
+    if let &Value::Table(ref dic_table) = toml_value {
         match dic_table.get(language) {
             Some(dic_contents) => {
                 if let Value::Table(ref dic) = *dic_contents {
@@ -30,12 +32,60 @@ pub fn get_dictionary(language: &str) -> Result<HashMap<String, String>, String>
                 }
             }
             None => {
-                return Err(String::from("cannot find appropriate language from dictionary"));
+                return Err("cannot find appropriate language from dictionary");
             }
         }
+        Ok(dictionary_map)
     }
+    else {
+        Err("cannot find toml tables")
+    }
+}
 
-    Ok(dictionary_map)
+#[derive(Debug,Clone)]
+pub struct SuffixPair {
+    pub left: String,
+    pub right: String,
+}
+
+pub trait SuffixPairArrayInterface {
+    fn find(&self, s: &str) -> Option<&SuffixPair>;
+}
+
+impl SuffixPairArrayInterface for Vec<SuffixPair> {
+    fn find(&self, s: &str) -> Option<&SuffixPair> {
+        for pair in self {
+            if pair.left == s || pair.right == s {
+                return Some(&pair);
+            }
+        }
+        None
+    }
+}
+
+pub fn get_suffix_pairs(toml_value: &Value, language: &str) -> Result<Vec<SuffixPair>, &'static str> {
+    let mut suffix_pairs = Vec::<SuffixPair>::new();
+    if let &Value::Table(ref all_tables) = toml_value {
+        match all_tables.get(&(String::from(language) + "-suffix")) {
+            Some(suffix_contents) => {
+                let suffix_table = match suffix_contents { &Value::Table(ref t) => Some(t), _ => None }.unwrap();
+                let suffix_pairs_toml = match suffix_table.get("suffix").unwrap() { &Value::Array(ref t) => Some(t), _ => None}.unwrap();
+                for pair in suffix_pairs_toml {
+                    let p = match pair { &Value::Array(ref t) => Some(t), _ => None}.unwrap();
+                    let left = match p.get(0).unwrap() { &Value::String(ref s) => Some(s), _ => None}.unwrap();
+                    let right = match p.get(1).unwrap() { &Value::String(ref s) => Some(s), _ => None}.unwrap();
+                    suffix_pairs.push(SuffixPair { left:left.clone(), right:right.clone(), });
+                }
+            }
+            None => {
+                return Err("cannot find appropriate language from dictionary");
+            }
+        }
+        Ok(suffix_pairs)
+    }
+    else {
+        Err("cannot find toml tables")
+    }
 }
 
 pub fn process_file(src_filepath: &Path, dst_filepath: &Path, dictionary_map: &HashMap<String, String>) {
@@ -52,9 +102,20 @@ pub fn process_file(src_filepath: &Path, dst_filepath: &Path, dictionary_map: &H
         let key = &src_string[m.start()+2..m.end()-2];
 
         dst_string += &src_string[last_index..m.start()];
-        dst_string += match dictionary_map.get(key) {
-            Some(word) => word,
-            _ => m.as_str(),
+        match dictionary_map.get(key) {
+            Some(word) => {
+                dst_string += word;
+                let mut next = &src_string[m.end()..].split_whitespace().next();
+                match *next {
+                    Some(suffix) => {
+                        println!(" suffix found: {}", suffix);
+                    },
+                    None => {},
+                };
+            },
+            _ => {
+                dst_string += m.as_str();
+            },
         };
         last_index = m.end();
     }
