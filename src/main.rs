@@ -100,18 +100,18 @@ fn main() {
 
         let re = Regex::new(r"@@[a-z|A-Z|\d]+@@").unwrap();
         
-        std::fs::create_dir_all("example/temp").expect("cannot create src_temp directory");
-        let files = std::fs::read_dir(Path::new("example/src")).expect("failed to read dir");
+        std::fs::create_dir_all("example/src").expect("cannot create src_temp directory");
+        let files = std::fs::read_dir(Path::new("example/src_pre")).expect("failed to read dir");
         for file in files {
             let f = file.expect("failed to get file");
             let src_filepath = f.path();
-            let dst_filepath = Path::new("example/temp").join(src_filepath.strip_prefix("example/src").unwrap());
+            let dst_filepath = Path::new("example/src").join(src_filepath.strip_prefix("example/src_pre").unwrap());
             process_file(&src_filepath, &dst_filepath, &dictionary_map);
         }
     }
 
     let mut book = MDBook::new(Path::new("example"))
-        .set_src(Path::new("src_temp"))
+        .set_src(Path::new("src"))
         .set_dest(Path::new("book"))
         .read_config();
     book.build().unwrap();
