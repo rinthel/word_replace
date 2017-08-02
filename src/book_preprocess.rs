@@ -63,6 +63,11 @@ impl SuffixPairArrayInterface for Vec<SuffixPair> {
     }
 }
 
+fn is_korean_character(c: char) -> bool {
+    let code_point = (c as u32);
+    code_point >= 0xAC00 && code_point <= 0xD7A3
+}
+
 pub fn get_suffix_pairs(toml_value: &Value, language: &str) -> Result<Vec<SuffixPair>, &'static str> {
     let mut suffix_pairs = Vec::<SuffixPair>::new();
     if let &Value::Table(ref all_tables) = toml_value {
@@ -88,7 +93,10 @@ pub fn get_suffix_pairs(toml_value: &Value, language: &str) -> Result<Vec<Suffix
     }
 }
 
-pub fn process_file(src_filepath: &Path, dst_filepath: &Path, dictionary_map: &HashMap<String, String>) {
+pub fn process_file(src_filepath: &Path,
+    dst_filepath: &Path,
+    dictionary_map: &HashMap<String, String>,
+    suffix_pairs: &Vec<SuffixPair>) {
     let re = Regex::new(r"@@[a-z|A-Z|\d]+@@").unwrap();
 
     let mut src_file = File::open(src_filepath).expect("failed to open file");
@@ -108,7 +116,8 @@ pub fn process_file(src_filepath: &Path, dst_filepath: &Path, dictionary_map: &H
                 let mut next = &src_string[m.end()..].split_whitespace().next();
                 match *next {
                     Some(suffix) => {
-                        println!(" suffix found: {}", suffix);
+                        let found_suffix_pair = suffix_pairs.find(suffix);
+                        println!(" found suffix found: {} => {:?}", suffix, found_suffix_pair);
                     },
                     None => {},
                 };

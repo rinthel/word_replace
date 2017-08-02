@@ -34,7 +34,7 @@ fn main() {
             let f = file.expect("failed to get file");
             let src_filepath = f.path();
             let dst_filepath = Path::new("example/src").join(src_filepath.strip_prefix("example/src_pre").unwrap());
-            process_file(&src_filepath, &dst_filepath, &dictionary_map);
+            process_file(&src_filepath, &dst_filepath, &dictionary_map, &suffix_pairs);
         }
     }
 
