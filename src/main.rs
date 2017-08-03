@@ -11,7 +11,7 @@ const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
 
 fn main() {
-    let matches = clap_app!(myapp =>
+    let matches = clap_app!(word_replace =>
         (version: VERSION)
         (author: AUTHORS)
         (about: "word replacement tool with toml-based dictionary")
@@ -44,8 +44,8 @@ fn main() {
     // println!("{:?}", matches);
     let toml_value = read_dictionary_toml_file(&dictfile);
     let dictionary_map = get_dictionary(&toml_value, language).expect("cannot read dictionary");
-    let suffix_pairs = get_suffix_pairs(&toml_value, language);
-    let suffix_pairs_option = match suffix_pairs {
+    let postpos_pairs = get_postpos_pairs(&toml_value, language);
+    let postpos_pairs_option = match postpos_pairs {
         Some(ref s) => Some(s),
         None => None,
     };
@@ -60,6 +60,6 @@ fn main() {
         if show_warning {
             println!("processing: {}", src_filepath.to_str().unwrap());
         }
-        process_file(&src_filepath, &dst_filepath, &dictionary_map, suffix_pairs_option, show_warning);
+        process_file(&src_filepath, &dst_filepath, &dictionary_map, postpos_pairs_option, show_warning);
     }
 }

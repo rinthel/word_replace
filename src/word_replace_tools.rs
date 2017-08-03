@@ -43,17 +43,17 @@ pub fn get_dictionary(toml_value: &Value, language: &str) -> Result<HashMap<Stri
 }
 
 #[derive(Debug,Clone)]
-pub struct SuffixPair {
+pub struct PostPosPair {
     pub left: String,
     pub right: String,
 }
 
-pub trait SuffixPairArrayInterface {
-    fn find(&self, s: &str) -> Option<&SuffixPair>;
+pub trait PostPosPairArrayInterface {
+    fn find(&self, s: &str) -> Option<&PostPosPair>;
 }
 
-impl SuffixPairArrayInterface for Vec<SuffixPair> {
-    fn find(&self, s: &str) -> Option<&SuffixPair> {
+impl PostPosPairArrayInterface for Vec<PostPosPair> {
+    fn find(&self, s: &str) -> Option<&PostPosPair> {
         for pair in self {
             if pair.left == s || pair.right == s {
                 return Some(&pair);
@@ -74,25 +74,25 @@ fn is_korean_character_and_has_final_jamo(c: char) -> (bool, bool) {
     }
 }
 
-pub fn get_suffix_pairs(toml_value: &Value, language: &str) -> Option<Vec<SuffixPair>> {
-    let mut suffix_pairs = Vec::<SuffixPair>::new();
+pub fn get_postpos_pairs(toml_value: &Value, language: &str) -> Option<Vec<PostPosPair>> {
+    let mut postpos_pairs = Vec::<PostPosPair>::new();
     if let &Value::Table(ref all_tables) = toml_value {
-        match all_tables.get(&(String::from(language) + "-suffix")) {
-            Some(suffix_contents) => {
-                let suffix_table = match suffix_contents { &Value::Table(ref t) => Some(t), _ => None }.unwrap();
-                let suffix_pairs_toml = match suffix_table.get("suffix").unwrap() { &Value::Array(ref t) => Some(t), _ => None}.unwrap();
-                for pair in suffix_pairs_toml {
+        match all_tables.get(&(String::from(language) + "-postpos")) {
+            Some(postpos_contents) => {
+                let postpos_table = match postpos_contents { &Value::Table(ref t) => Some(t), _ => None }.unwrap();
+                let postpos_pairs_toml = match postpos_table.get("postpos").unwrap() { &Value::Array(ref t) => Some(t), _ => None}.unwrap();
+                for pair in postpos_pairs_toml {
                     let p = match pair { &Value::Array(ref t) => Some(t), _ => None}.unwrap();
                     let left = match p.get(0).unwrap() { &Value::String(ref s) => Some(s), _ => None}.unwrap();
                     let right = match p.get(1).unwrap() { &Value::String(ref s) => Some(s), _ => None}.unwrap();
-                    suffix_pairs.push(SuffixPair { left:left.clone(), right:right.clone(), });
+                    postpos_pairs.push(PostPosPair { left:left.clone(), right:right.clone(), });
                 }
             }
             None => {
                 return None;
             }
         }
-        Some(suffix_pairs)
+        Some(postpos_pairs)
     }
     else {
         None
@@ -102,7 +102,7 @@ pub fn get_suffix_pairs(toml_value: &Value, language: &str) -> Option<Vec<Suffix
 pub fn process_file(src_filepath: &Path,
     dst_filepath: &Path,
     dictionary_map: &HashMap<String, String>,
-    suffix_pairs_option: Option<&Vec<SuffixPair>>,
+    postpos_pairs_option: Option<&Vec<PostPosPair>>,
     show_warning: bool) {
     let re = Regex::new(r"@@[a-z|A-Z|\d]+@@").unwrap();
 
@@ -120,23 +120,23 @@ pub fn process_file(src_filepath: &Path,
         match dictionary_map.get(key) {
             Some(word) => {
                 dst_string += word;
-                if let Some(suffix_pairs) = suffix_pairs_option {
+                if let Some(postpos_pairs) = postpos_pairs_option {
                     let next = &src_string[m.end()..].split_whitespace().next();
                     match *next {
                         Some(suffix) => {
-                            let found_suffix_pair = suffix_pairs.find(suffix);
+                            let found_postpos_pair = postpos_pairs.find(suffix);
                             let (word_is_korean, word_has_final_jamo) =
                                 is_korean_character_and_has_final_jamo(word.chars().last().unwrap());
-                            let (suffix_is_korean, _) = 
+                            let (postpos_is_korean, _) = 
                                 is_korean_character_and_has_final_jamo(suffix.chars().next().unwrap());
                             if word_is_korean {
-                                if let Some(found_suffix_pair) = found_suffix_pair {
+                                if let Some(found_postpos_pair) = found_postpos_pair {
                                     dst_string += if word_has_final_jamo
-                                        { found_suffix_pair.right.as_str() } else { found_suffix_pair.left.as_str() };
+                                        { found_postpos_pair.right.as_str() } else { found_postpos_pair.left.as_str() };
                                     additional_advance = suffix.len();
                                 }
                                 else {
-                                    if suffix_is_korean && show_warning {
+                                    if postpos_is_korean && show_warning {
                                         println!("undefined korean suffix at {}: {}{}",
                                             src_filepath.to_str().unwrap(), word, suffix);
                                     }

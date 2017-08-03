@@ -5,8 +5,8 @@ cargo = "Cargo"
 mdbook = "mdBook"
 crait = "크레이트"
 
-[ko-suffix]
-suffix = [ # 왼쪽은 받침이 없을때, 오른쪽은 받침이 있을때
+[ko-postpos]
+postpos = [ # 왼쪽은 받침이 없을때, 오른쪽은 받침이 있을때
     ["는", "은"],
     ["가", "이"],
     ["를", "을"],
