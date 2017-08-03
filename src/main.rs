@@ -24,8 +24,6 @@ fn main() {
     let dictionary_map = get_dictionary(&toml_value, "ko").expect("cannot read dictionary");
     let suffix_pairs = get_suffix_pairs(&toml_value, "ko").expect("cannot read suffix");
 
-    println!("suffix pairs: {:?}", suffix_pairs);
-
     // open dir and scan all .md files
     {        
         std::fs::create_dir_all("example/src").expect("cannot create src_temp directory");

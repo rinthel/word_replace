@@ -63,9 +63,15 @@ impl SuffixPairArrayInterface for Vec<SuffixPair> {
     }
 }
 
-fn is_korean_character(c: char) -> bool {
+fn is_korean_character_and_has_final_jamo(c: char) -> (bool, bool) {
     let code_point = (c as u32);
-    code_point >= 0xAC00 && code_point <= 0xD7A3
+    let is_korean_character = code_point >= 0xAC00 && code_point <= 0xD7A3;
+    if (is_korean_character) {
+        (true, (code_point - 0xAC00) % 28 != 0)
+    }
+    else {
+        (false, false)
+    }
 }
 
 pub fn get_suffix_pairs(toml_value: &Value, language: &str) -> Result<Vec<SuffixPair>, &'static str> {
@@ -108,16 +114,32 @@ pub fn process_file(src_filepath: &Path,
     for c in re.captures_iter(&src_string) {
         let m = c.get(0).unwrap();
         let key = &src_string[m.start()+2..m.end()-2];
-
+        let mut additional_advance = 0;
         dst_string += &src_string[last_index..m.start()];
         match dictionary_map.get(key) {
             Some(word) => {
                 dst_string += word;
-                let mut next = &src_string[m.end()..].split_whitespace().next();
+                let next = &src_string[m.end()..].split_whitespace().next();
                 match *next {
                     Some(suffix) => {
                         let found_suffix_pair = suffix_pairs.find(suffix);
-                        println!(" found suffix found: {} => {:?}", suffix, found_suffix_pair);
+                        let (word_is_korean, word_has_final_jamo) =
+                            is_korean_character_and_has_final_jamo(word.chars().last().unwrap());
+                        let (suffix_is_korean, _) = 
+                            is_korean_character_and_has_final_jamo(suffix.chars().next().unwrap());
+                        if word_is_korean {
+                            if let Some(found_suffix_pair) = found_suffix_pair {
+                                dst_string += if word_has_final_jamo
+                                    { found_suffix_pair.right.as_str() } else { found_suffix_pair.left.as_str() };
+                                additional_advance = suffix.len();
+                            }
+                            else {
+                                if suffix_is_korean {
+                                    println!("undefined korean suffix at {}: {}{}",
+                                        src_filepath.to_str().unwrap(), word, suffix);
+                                }
+                            }
+                        }
                     },
                     None => {},
                 };
@@ -127,6 +149,7 @@ pub fn process_file(src_filepath: &Path,
             },
         };
         last_index = m.end();
+        last_index += additional_advance;
     }
     dst_string += &src_string[last_index..];
 
