@@ -1,7 +1,5 @@
-extern crate mdbook;
 extern crate clap;
 
-use mdbook::MDBook;
 use clap::{Arg, App, SubCommand};
 
 use std::env;
@@ -14,11 +12,10 @@ const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
 
 fn main() {
-    let matches = App::new("mdBook with dictionary - word replacement")
+    let matches = App::new("mdbook with dictionary - word replacement")
         .version(VERSION)
         .author(AUTHORS)
-        .subcommand(SubCommand::with_name("build")
-            .about("build documents"))
+        .arg(Arg::with_name("dest"))
         .get_matches();
 
     // println!("current path: {}", env::current_dir().unwrap().display());
@@ -28,20 +25,12 @@ fn main() {
     let suffix_pairs = get_suffix_pairs(&toml_value, "ko").expect("cannot read suffix");
 
     // open dir and scan all .md files
-    {        
-        std::fs::create_dir_all("example/src").expect("cannot create src_temp directory");
-        let files = std::fs::read_dir(Path::new("example/src_pre")).expect("failed to read dir");
-        for file in files {
-            let f = file.expect("failed to get file");
-            let src_filepath = f.path();
-            let dst_filepath = Path::new("example/src").join(src_filepath.strip_prefix("example/src_pre").unwrap());
-            process_file(&src_filepath, &dst_filepath, &dictionary_map, &suffix_pairs);
-        }
+    std::fs::create_dir_all("example/src").expect("cannot create src_temp directory");
+    let files = std::fs::read_dir(Path::new("example/src_pre")).expect("failed to read dir");
+    for file in files {
+        let f = file.expect("failed to get file");
+        let src_filepath = f.path();
+        let dst_filepath = Path::new("example/src").join(src_filepath.strip_prefix("example/src_pre").unwrap());
+        process_file(&src_filepath, &dst_filepath, &dictionary_map, &suffix_pairs);
     }
-
-    let mut book = MDBook::new(Path::new("example"))
-        .set_src(Path::new("src"))
-        .set_dest(Path::new("book"))
-        .read_config();
-    book.build().unwrap();
 }
