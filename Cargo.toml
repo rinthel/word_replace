@@ -1,7 +1,7 @@
 [package]
-name = "mdbook_with_dic"
+name = "mdbook_with_dict"
 version = "0.1.0"
-authors = ["Rinthel Kwon in Office <r@insertcoin.me>"]
+authors = ["Rinthel Kwon<rinthel@gmail.com>"]
 
 [dependencies]
 mdbook = "*"

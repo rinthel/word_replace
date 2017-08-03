@@ -1,5 +1,5 @@
 [root]
-name = "mdbook_with_dic"
+name = "mdbook_with_dict"
 version = "0.1.0"
 dependencies = [
  "clap 2.25.1 (registry+https://github.com/rust-lang/crates.io-index)",

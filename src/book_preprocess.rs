@@ -64,9 +64,9 @@ impl SuffixPairArrayInterface for Vec<SuffixPair> {
 }
 
 fn is_korean_character_and_has_final_jamo(c: char) -> (bool, bool) {
-    let code_point = (c as u32);
+    let code_point = c as u32;
     let is_korean_character = code_point >= 0xAC00 && code_point <= 0xD7A3;
-    if (is_korean_character) {
+    if is_korean_character {
         (true, (code_point - 0xAC00) % 28 != 0)
     }
     else {

@@ -10,17 +10,20 @@ use std::path::Path;
 mod book_preprocess;
 use book_preprocess::*;
 
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
+
 fn main() {
-    let matches = App::new("mdBook with dictionary replacement")
-        .version("0.1.0")
-        .author("Rinthel Kwon")
+    let matches = App::new("mdBook with dictionary - word replacement")
+        .version(VERSION)
+        .author(AUTHORS)
         .subcommand(SubCommand::with_name("build")
             .about("build documents"))
         .get_matches();
 
     // println!("current path: {}", env::current_dir().unwrap().display());
     // println!("{:?}", matches);
-    let toml_value = read_dictionary_toml_file(Path::new("dic.toml"));
+    let toml_value = read_dictionary_toml_file(Path::new("example/dict.toml"));
     let dictionary_map = get_dictionary(&toml_value, "ko").expect("cannot read dictionary");
     let suffix_pairs = get_suffix_pairs(&toml_value, "ko").expect("cannot read suffix");
 
