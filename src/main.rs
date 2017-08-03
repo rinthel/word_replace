@@ -1,12 +1,10 @@
 extern crate clap;
 
-use clap::{Arg, App, SubCommand};
-
-use std::env;
-use std::path::Path;
-
 mod book_preprocess;
 use book_preprocess::*;
+
+use std::path::Path;
+use clap::{Arg, App};
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
@@ -15,7 +13,8 @@ fn main() {
     let matches = App::new("mdbook with dictionary - word replacement")
         .version(VERSION)
         .author(AUTHORS)
-        .arg(Arg::with_name("dest"))
+        .arg(Arg::with_name("INPUT"))
+        .arg(Arg::with_name("LANGUAGE"))
         .get_matches();
 
     // println!("current path: {}", env::current_dir().unwrap().display());
