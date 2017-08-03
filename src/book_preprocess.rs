@@ -74,7 +74,7 @@ fn is_korean_character_and_has_final_jamo(c: char) -> (bool, bool) {
     }
 }
 
-pub fn get_suffix_pairs(toml_value: &Value, language: &str) -> Result<Vec<SuffixPair>, &'static str> {
+pub fn get_suffix_pairs(toml_value: &Value, language: &str) -> Option<Vec<SuffixPair>> {
     let mut suffix_pairs = Vec::<SuffixPair>::new();
     if let &Value::Table(ref all_tables) = toml_value {
         match all_tables.get(&(String::from(language) + "-suffix")) {
@@ -89,20 +89,21 @@ pub fn get_suffix_pairs(toml_value: &Value, language: &str) -> Result<Vec<Suffix
                 }
             }
             None => {
-                return Err("cannot find appropriate language from dictionary");
+                return None;
             }
         }
-        Ok(suffix_pairs)
+        Some(suffix_pairs)
     }
     else {
-        Err("cannot find toml tables")
+        None
     }
 }
 
 pub fn process_file(src_filepath: &Path,
     dst_filepath: &Path,
     dictionary_map: &HashMap<String, String>,
-    suffix_pairs: &Vec<SuffixPair>) {
+    suffix_pairs_option: Option<&Vec<SuffixPair>>,
+    show_warning: bool) {
     let re = Regex::new(r"@@[a-z|A-Z|\d]+@@").unwrap();
 
     let mut src_file = File::open(src_filepath).expect("failed to open file");
@@ -119,30 +120,32 @@ pub fn process_file(src_filepath: &Path,
         match dictionary_map.get(key) {
             Some(word) => {
                 dst_string += word;
-                let next = &src_string[m.end()..].split_whitespace().next();
-                match *next {
-                    Some(suffix) => {
-                        let found_suffix_pair = suffix_pairs.find(suffix);
-                        let (word_is_korean, word_has_final_jamo) =
-                            is_korean_character_and_has_final_jamo(word.chars().last().unwrap());
-                        let (suffix_is_korean, _) = 
-                            is_korean_character_and_has_final_jamo(suffix.chars().next().unwrap());
-                        if word_is_korean {
-                            if let Some(found_suffix_pair) = found_suffix_pair {
-                                dst_string += if word_has_final_jamo
-                                    { found_suffix_pair.right.as_str() } else { found_suffix_pair.left.as_str() };
-                                additional_advance = suffix.len();
-                            }
-                            else {
-                                if suffix_is_korean {
-                                    println!("undefined korean suffix at {}: {}{}",
-                                        src_filepath.to_str().unwrap(), word, suffix);
+                if let Some(suffix_pairs) = suffix_pairs_option {
+                    let next = &src_string[m.end()..].split_whitespace().next();
+                    match *next {
+                        Some(suffix) => {
+                            let found_suffix_pair = suffix_pairs.find(suffix);
+                            let (word_is_korean, word_has_final_jamo) =
+                                is_korean_character_and_has_final_jamo(word.chars().last().unwrap());
+                            let (suffix_is_korean, _) = 
+                                is_korean_character_and_has_final_jamo(suffix.chars().next().unwrap());
+                            if word_is_korean {
+                                if let Some(found_suffix_pair) = found_suffix_pair {
+                                    dst_string += if word_has_final_jamo
+                                        { found_suffix_pair.right.as_str() } else { found_suffix_pair.left.as_str() };
+                                    additional_advance = suffix.len();
+                                }
+                                else {
+                                    if suffix_is_korean && show_warning {
+                                        println!("undefined korean suffix at {}: {}{}",
+                                            src_filepath.to_str().unwrap(), word, suffix);
+                                    }
                                 }
                             }
-                        }
-                    },
-                    None => {},
-                };
+                        },
+                        None => {},
+                    };
+                }
             },
             _ => {
                 dst_string += m.as_str();
