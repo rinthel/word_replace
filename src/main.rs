@@ -1,8 +1,8 @@
 #[macro_use]
 extern crate clap;
 
-mod book_preprocess;
-use book_preprocess::*;
+mod word_replace_tools;
+use word_replace_tools::*;
 
 // use std::env;
 use std::path::Path;
