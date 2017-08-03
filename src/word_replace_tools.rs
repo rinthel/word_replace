@@ -123,22 +123,23 @@ pub fn process_file(src_filepath: &Path,
                 if let Some(postpos_pairs) = postpos_pairs_option {
                     let next = &src_string[m.end()..].split_whitespace().next();
                     match *next {
-                        Some(suffix) => {
-                            let found_postpos_pair = postpos_pairs.find(suffix);
+                        Some(postpos) => {
+                            let found_postpos_pair = postpos_pairs.find(postpos);
                             let (word_is_korean, word_has_final_jamo) =
                                 is_korean_character_and_has_final_jamo(word.chars().last().unwrap());
                             let (postpos_is_korean, _) = 
-                                is_korean_character_and_has_final_jamo(suffix.chars().next().unwrap());
+                                is_korean_character_and_has_final_jamo(postpos.chars().next().unwrap());
                             if word_is_korean {
                                 if let Some(found_postpos_pair) = found_postpos_pair {
                                     dst_string += if word_has_final_jamo
                                         { found_postpos_pair.right.as_str() } else { found_postpos_pair.left.as_str() };
-                                    additional_advance = suffix.len();
+                                    additional_advance = postpos.len();
                                 }
                                 else {
                                     if postpos_is_korean && show_warning {
-                                        println!("undefined korean suffix at {}: {}{}",
-                                            src_filepath.to_str().unwrap(), word, suffix);
+                                        println!("warning: undefined korean postposition at {}: {}{} => {}{}",
+                                            src_filepath.to_str().unwrap(), m.as_str(), postpos,
+                                            word, postpos);
                                     }
                                 }
                             }
