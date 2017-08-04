@@ -135,8 +135,9 @@ pub fn process_file(src_filepath: &Path,
             Some(word) => {
                 dst_string += word;
                 if let Some(postpos_pairs) = postpos_pairs_option {
-                    let next = &src_string[m.end()..].split_whitespace().next();
-                    match *next {
+                    let is_whitespace = src_string[m.end()..].chars().next().unwrap_or(' ').is_whitespace();
+                    let next = if is_whitespace { None } else { src_string[m.end()..].split_whitespace().next() };
+                    match next {
                         Some(postpos) => {
                             let found_postpos_pair = postpos_pairs.find(postpos);
                             let (word_is_korean, word_has_final_jamo) =
