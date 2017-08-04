@@ -2,6 +2,9 @@ extern crate toml;
 extern crate regex;
 
 use std::collections::HashMap;
+use std::fs::copy as file_copy;
+use std::fs::create_dir_all;
+use std::fs::read_dir;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
@@ -108,7 +111,18 @@ pub fn process_file(src_filepath: &Path,
 
     let mut src_file = File::open(src_filepath).expect("failed to open file");
     let mut src_string = String::new();
-    src_file.read_to_string(&mut src_string).expect("failed to read file");
+    let src_read_result = src_file.read_to_string(&mut src_string);
+    match src_read_result {
+        Err(_) => {
+            if show_warning {
+                println!("{} is not a text file, so just copied.", src_filepath.to_str().unwrap());
+                file_copy(src_filepath, dst_filepath).expect("failed to copy file");
+                return;
+            }
+        }
+        _ => {},
+    }
+    
     let mut dst_string = String::new();
 
     let mut last_index = 0;
@@ -159,4 +173,27 @@ pub fn process_file(src_filepath: &Path,
 
     let mut dst_file = File::create(dst_filepath).expect("failed to open destination file");
     dst_file.write_all(dst_string.as_bytes()).expect("failed to write destination file");
+}
+
+
+pub fn process_directory(input_directory: &Path,
+    output_directory: &Path,
+    dictionary_map: &HashMap<String, String>,
+    postpos_pairs_option: Option<&Vec<PostPosPair>>,
+    show_warning: bool) {
+    create_dir_all(&output_directory).expect("cannot create output directory");
+    let paths = read_dir(&input_directory).expect("failed to read input directory");
+    for p in paths {
+        let src_path = p.expect("failed to get source file path").path();
+        let dst_path = output_directory.join(src_path.strip_prefix(&input_directory).unwrap());
+        if src_path.is_dir() {
+            process_directory(&src_path, &dst_path, dictionary_map, postpos_pairs_option, show_warning);
+        }
+        else {
+            if show_warning {
+                println!("processing: {}", src_path.to_str().unwrap());
+            }
+            process_file(&src_path, &dst_path, &dictionary_map, postpos_pairs_option, show_warning);
+        }
+    }
 }

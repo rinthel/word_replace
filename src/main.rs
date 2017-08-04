@@ -4,7 +4,6 @@ extern crate clap;
 mod word_replace_tools;
 use word_replace_tools::*;
 
-// use std::env;
 use std::path::Path;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -50,16 +49,6 @@ fn main() {
         None => None,
     };
 
-    // open dir and scan all .md files
-    std::fs::create_dir_all(&output_directory).expect("cannot create output directory");
-    let files = std::fs::read_dir(&input_directory).expect("failed to read input directory");
-    for file in files {
-        let f = file.expect("failed to get source file");
-        let src_filepath = f.path();
-        let dst_filepath = output_directory.join(src_filepath.strip_prefix(&input_directory).unwrap());
-        if show_warning {
-            println!("processing: {}", src_filepath.to_str().unwrap());
-        }
-        process_file(&src_filepath, &dst_filepath, &dictionary_map, postpos_pairs_option, show_warning);
-    }
+    // open dir and scan all files
+    process_directory(&input_directory, &output_directory, &dictionary_map, postpos_pairs_option, show_warning);
 }

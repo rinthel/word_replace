@@ -6,3 +6,5 @@
 `mdbook build`라고 커멘드 라인에서 입력하면 됩니다.
 
 @@mdbook@@을 @@cargo@@를 통해 설치하시면 @@crait@@로서 사용할 수 도 있게됩니다.
+
+![hello from rust](hello.png)
