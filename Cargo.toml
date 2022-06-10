@@ -14,4 +14,4 @@ license = "MIT"
 [dependencies]
 clap = "2.26"
 toml = "0.4"
-regex = "0.2"
+regex = "1.5"
